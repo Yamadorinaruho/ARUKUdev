@@ -1,32 +1,26 @@
-//
-//  ARUKUdevApp.swift
-//  ARUKUdev
-//
-//  Created by yamadorinaruho on 2024/12/07.
-//
-
 import SwiftUI
-import SwiftData
+import Foundation
 
 @main
 struct ARUKUdevApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
+    @StateObject private var calendarViewModel = CalendarViewModel()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TabView {
+                CalendarView()
+                    .environmentObject(calendarViewModel)
+                    .tabItem {
+                        Image(systemName: "calendar")
+                        Text("カレンダー")
+                    }
+            }
         }
-        .modelContainer(sharedModelContainer)
     }
+}
+
+// カレンダービューのプレビュー用
+#Preview {
+    CalendarView()
+        .environmentObject(CalendarViewModel())
 }

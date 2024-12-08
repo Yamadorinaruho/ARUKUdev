@@ -2,24 +2,26 @@
 import SwiftUI
 
 struct CalendarView: View {
-    @StateObject private var viewModel = CalendarViewModel()
-    @State private var sleepHours: Double = 8.0
+    @EnvironmentObject var dayRecordViewModel: DayRecordViewModel
+    @StateObject private var viewModel: CalendarViewModel
+    
+    init() {
+        _viewModel = StateObject(wrappedValue: CalendarViewModel())
+    }
+    
     
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
-                CalendarHeaderView(dateString: viewModel.formatYearMonth())
-                    .padding(.top, 8)
-                
                 CalendarGridView(viewModel: viewModel)
                 
-                DayDetailsView(selectedDate: viewModel.selectedDate, sleepHours: sleepHours)
+                DayDetailsView(selectedDate: viewModel.selectedDate)
                     .padding(.horizontal, 16)
                 
                 Spacer()
                 
-                CustomTabBar()
             }
+            .padding(.top, 16)
             .navigationBarHidden(true)
             .background(Color(UIColor.systemGray6))
         }
@@ -27,4 +29,5 @@ struct CalendarView: View {
 }
 #Preview {
     CalendarView()
+        .environmentObject(DayRecordViewModel())
 }

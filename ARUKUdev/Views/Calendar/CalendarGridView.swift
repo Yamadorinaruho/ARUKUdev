@@ -8,7 +8,26 @@ struct CalendarGridView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // Weekday headers
+            // 月選択部分
+            HStack {
+                Button(action: { viewModel.previousMonth() }) {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.primary)
+                }
+                
+                Text(viewModel.formatYearMonth())
+                    .font(.headline)
+                    .frame(minWidth: 100)
+                    .accessibilityLabel("\(viewModel.currentMonth.formatted(.dateTime.year().month()))")
+                
+                Button(action: { viewModel.nextMonth() }) {
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.primary)
+                }
+            }
+            .padding(.bottom, 12)
+            
+            // 曜日ヘッダー
             LazyVGrid(columns: columns) {
                 ForEach(weekDays, id: \.self) { day in
                     Text(day)
@@ -19,7 +38,7 @@ struct CalendarGridView: View {
                 }
             }
             
-            // Calendar days
+            // カレンダー日付
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(viewModel.daysInMonth(), id: \.date) { day in
                     if day.day == 0 {
@@ -29,7 +48,7 @@ struct CalendarGridView: View {
                         DayCell(
                             day: day.day,
                             isSelected: Calendar.current.isDate(day.date, inSameDayAs: viewModel.selectedDate),
-                            isHighlighted: day.day == 24
+                            isHighlighted: Calendar.current.isDateInToday(day.date)
                         )
                         .onTapGesture {
                             withAnimation(.easeInOut(duration: 0.2)) {

@@ -9,18 +9,19 @@ struct ProgressBar: View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(height: 12)
+                    .fill(Color.gray.opacity(0.15))
                 
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.yellow)
-                    .frame(width: min(geometry.size.width * value, geometry.size.width), height: 12)
-                    .animation(.easeInOut(duration: 0.3), value: value)
+                    .fill(Color.customYellow)  // .yellow から .customYellow に変更
+                    .frame(width: max(min(geometry.size.width * value, geometry.size.width), 0))
                 
                 Text(label)
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundColor(colorScheme == .dark ? .white : .black)
-                    .padding(.leading, min(geometry.size.width * value + 5, geometry.size.width - 20))
+                    .padding(.leading, min(
+                        max(geometry.size.width * value + 5, 25),
+                        geometry.size.width - 25
+                    ))
             }
         }
     }

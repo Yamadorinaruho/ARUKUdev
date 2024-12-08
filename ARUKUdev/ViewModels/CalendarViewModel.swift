@@ -1,48 +1,56 @@
 import Foundation
-import SwiftUI
+import Combine
 
 class CalendarViewModel: ObservableObject {
-    @Published var currentDate = Date()
-    @Published var selectedDate = Date()
+    @Published var currentMonth: Date
+    @Published var selectedDate: Date
+    private let calendar = Calendar.current
     
-    func daysInMonth() -> [(day: Int, date: Date)] {
-        let calendar = Calendar.current
-        let currentMonth = calendar.component(.month, from: currentDate)
-        let currentYear = calendar.component(.year, from: currentDate)
-        
-        // 月の初日を取得
-        guard let startDate = calendar.date(from: DateComponents(year: currentYear, month: currentMonth, day: 1)) else {
-            return []
+    init() {
+        self.currentMonth = Date()
+        self.selectedDate = Date()
+    }
+    
+    func previousMonth() {
+        if let newDate = calendar.date(byAdding: .month, value: -1, to: currentMonth) {
+            currentMonth = newDate
         }
-        
-        // 月の日数を取得
-        let range = calendar.range(of: .day, in: .month, for: currentDate)!
-        
-        var days: [(day: Int, date: Date)] = []
-        
-        // 初日の曜日のオフセットを追加
-        let weekday = calendar.component(.weekday, from: startDate)
-        let offset = weekday - 1 // 日曜日から開始
-        
-        // オフセット用の空の日付を追加
-        for _ in 0..<offset {
-            days.append((day: 0, date: Date()))
+    }
+    
+    func nextMonth() {
+        if let newDate = calendar.date(byAdding: .month, value: 1, to: currentMonth) {
+            currentMonth = newDate
         }
-        
-        // 実際の日付を追加
-        for day in 1...range.count {
-            if let date = calendar.date(from: DateComponents(year: currentYear, month: currentMonth, day: day)) {
-                days.append((day: day, date: date))
-            }
-        }
-        
-        return days
     }
     
     func formatYearMonth() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy年MM月"
-        formatter.locale = Locale(identifier: "ja_JP")
-        return formatter.string(from: currentDate)
+        formatter.dateFormat = "yyyy年M月"
+        return formatter.string(from: currentMonth)
+    }
+    
+    func daysInMonth() -> [(day: Int, date: Date)] {
+        var days: [(day: Int, date: Date)] = []
+        
+        guard let range = calendar.range(of: .day, in: .month, for: currentMonth),
+              let firstDayOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth)) else {
+            return days
+        }
+        
+        let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth)
+        
+        // 月初めの空白を追加
+        for _ in 1..<firstWeekday {
+            days.append((0, Date()))
+        }
+        
+        // 月の日付を追加
+        for day in range {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: firstDayOfMonth) {
+                days.append((day, date))
+            }
+        }
+        
+        return days
     }
 }

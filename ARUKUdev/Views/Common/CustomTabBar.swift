@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct CustomTabBar: View {
+    @Binding var selectedTab: Int
     @Environment(\.colorScheme) private var colorScheme
-    @State private var selectedTab = 0
     
     var body: some View {
         HStack {
@@ -33,7 +33,7 @@ struct CustomTabBar: View {
 
 struct TabBarButton: View {
     let image: String
-    let isSelected: Bool
+    let isSelected: Bool 
     let action: () -> Void
     @State private var isPressed = false
     

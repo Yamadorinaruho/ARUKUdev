@@ -2,63 +2,92 @@ import SwiftUI
 
 struct DayDetailsView: View {
     let selectedDate: Date
-    let sleepHours: Double
-    @Environment(\.colorScheme) private var colorScheme
+    @StateObject private var viewModel = DayRecordViewModel()
+    @Environment(\.colorScheme) private var colorScheme: ColorScheme
+    @State private var showingEditView = false
+    @State private var isPressed = false
+    
+    private var currentRecord: DayRecord? {
+        viewModel.getRecord(for: selectedDate)
+    }
     
     var formattedDate: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MM月dd日(E)"
+        formatter.dateFormat = "M月d日(E)"
         formatter.locale = Locale(identifier: "ja_JP")
         return formatter.string(from: selectedDate)
     }
     
-    private var hasData: Bool {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.month, .day], from: selectedDate)
-        return components.month == 12 && components.day == 7
-    }
-    
     var body: some View {
-        if hasData {
-            VStack(alignment: .leading, spacing: 15) {
-                Text(formattedDate)
-                    .font(.system(size: 18, weight: .medium))
-                    .padding(.bottom, 5)
-                    .accessibilityLabel("\(formattedDate)のデータ")
-                
-                HStack {
-                    Image(systemName: "face.smiling.fill")
-                        .foregroundColor(.orange)
-                        .font(.system(size: 24))
-                    Text("早起き / 散歩")
-                        .font(.system(size: 16))
-                }
-                .accessibilityElement(children: .combine)
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("睡眠時間")
-                        .font(.system(size: 16))
+        Group {
+            if let record = currentRecord {
+                VStack(alignment: .leading, spacing: 15) {
+                    Text(formattedDate)
+                        .font(.system(size: 18, weight: .medium))
+                        .padding(.bottom, 5)
                     
-                    ProgressBar(value: sleepHours / 12.0, label: "\(Int(sleepHours))h")
-                        .frame(height: 20)
-                        .accessibilityLabel("睡眠時間\(Int(sleepHours))時間")
+                    HStack(spacing: 16) {
+                        Image(MoodItem.allMoods[record.mood ?? 2].selectedImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
+                        
+                        if !record.activities.isEmpty {
+                            Text(record.activities.joined(separator: " / "))
+                                .font(.system(size: 16))
+                                .lineLimit(1)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("睡眠時間")
+                            .font(.system(size: 16))
+                        
+                        ProgressBar(
+                            value: record.sleepHours / 15.0,
+                            label: "\(Int(record.sleepHours))h"
+                        )
+                        .frame(height: 24)
+                        .accessibilityLabel("睡眠時間\(Int(record.sleepHours))時間")
+                    }
                 }
+                .contentShape(Rectangle())  // タップ領域を確保
+                .padding(.horizontal, 30)
+                .padding(.vertical, 18)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(colorScheme == .dark ? Color(UIColor.systemGray6) : .white)
+                .cornerRadius(15)
+                .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
+                .scaleEffect(isPressed ? 0.98 : 1.0)
+                .animation(.easeInOut(duration: 0.1), value: isPressed)
+                .onTapGesture {
+                    withAnimation {
+                        isPressed = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isPressed = false
+                            showingEditView = true
+                        }
+                    }
+                }
+                .accessibilityAddTraits(.isButton)
+            } else {
+                EmptyDayCard(date: formattedDate, showingEditView: $showingEditView)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(colorScheme == .dark ? Color(UIColor.systemGray6) : .white)
-            .cornerRadius(15)
-            .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
-        } else {
-            EmptyDayCard(date: formattedDate)
+        }
+        .sheet(isPresented: $showingEditView) {
+            DataEditView(
+                viewModel: viewModel,
+                date: selectedDate
+            )
         }
     }
 }
 
-fileprivate struct EmptyDayCard: View {
+private struct EmptyDayCard: View {
     let date: String
-    @Environment(\.colorScheme) private var colorScheme
+    @Binding var showingEditView: Bool
+    @Environment(\.colorScheme) private var colorScheme: ColorScheme
     @State private var isPressed = false
     
     var body: some View {
@@ -94,7 +123,7 @@ fileprivate struct EmptyDayCard: View {
                 isPressed = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     isPressed = false
-                    // TODO: データ追加画面への遷移処理
+                    showingEditView = true
                 }
             }
         }

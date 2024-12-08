@@ -1,61 +1,37 @@
-//
-//  ContentView.swift
-//  ARUKUdev
-//
-//  Created by yamadorinaruho on 2024/12/07.
-//
-
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @State private var selectedTab: Int? = 0
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        TabView(selection: $selectedTab) {
+            CalendarView()
+                .tabItem {
+                    Label("カレンダー", systemImage: "calendar")
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                .tag(0)
+            
+            SettingsView()
+                .tabItem {
+                    Label("設定", systemImage: "person.circle")
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
+                .tag(1)
         }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+        .frame(maxWidth: 450) // iPhoneに近い最大幅を設定
+        .environment(\.horizontalSizeClass, .compact) // 明示的にcompactを強制
+        .ignoresSafeArea(.keyboard)
     }
 }
 
-#Preview {
+#Preview("iPhone SE") {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+}
+
+#Preview("iPad Air") {
+    ContentView()
+}
+
+#Preview("Mac") {
+    ContentView()
 }
